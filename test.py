@@ -6,13 +6,11 @@ screen_width = 1280
 screen_height = 720
 grid_size = 20
 
-
 # Define a main function
 def main():
     # Initialize the pygame module
     pygame.init()
     pygame.display.set_caption("Snake Game")
-
     screen = pygame.display.set_mode((screen_width, screen_height))
     # Define a variable to control the main loop
     running = True
@@ -57,8 +55,6 @@ class Snake:
             self.direction = 'right'
 
 
-
-
-
+# Run the main program
 if __name__ == "__main__":
     main()
