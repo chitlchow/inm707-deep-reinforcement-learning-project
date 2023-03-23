@@ -12,8 +12,6 @@ SCREEN_HEIGHT = 480
 GRID_SIZE = 20
 
 # Define Snake class
-
-
 class Snake:
     def __init__(self):
         self.positions = [(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)]
@@ -117,4 +115,6 @@ def game_loop():
         if snake.positions[0] == food.position:
             food.spawn()
             snake.grow()
-            score +=
+            score += 1
+
+
