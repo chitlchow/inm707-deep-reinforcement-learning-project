@@ -6,7 +6,7 @@ screen_width = 1280
 screen_height = 720
 grid_size = 20
 black = (0, 0, 0)
-
+white = (255, 255, 255)
 # Game clock
 clock = pygame.time.Clock()
 
@@ -21,7 +21,10 @@ class Snake:
         self.color = (0, 200, 0) # Color of the snake
 
     def move(self):
+        # Get the current x and y position
         x, y = self.x, self.y
+
+        # Chnage the position based on the direction it is moving
         if self.direction == "up":
             y -= grid_size
         elif self.direction == 'down':
@@ -30,17 +33,24 @@ class Snake:
             x -= grid_size
         else:
             x += grid_size
+
+        # If the snake is going out of the boundary in the x-direction
         if x > 1280:
             x = 0
-        if x < 0:
+        elif x < 0:
             x = 1280
+
+        # If the snake is going out of the boundary in the y-direction
         if y > 720:
             y = 0
-        if y < 0:
+        elif y < 0:
             y = 720
+
+        # Return the x and y coordinates
         return x, y
 
     def change_direction(self, direction):
+
         if direction == 'up' and self.direction != 'down':
             self.direction = 'up'
         elif direction == 'down' and self.direction != 'up':
@@ -60,13 +70,14 @@ class Food:
         self.y = random.randrange(0, 720, 20)
         self.color = (0, 0, 200)
 
-    def move_to_random_position(self):
-        self.x = random.randint(0, 1280)
-        self.y = random.randint(0, 720)
+    def move_to_random_position(self, screen):
+        pygame.draw.rect(screen, white, [self.x, self.y, grid_size, grid_size])
+        self.x = random.randrange(0, 1280, 20)
+        self.y = random.randrange(0, 720, 20)
+        self.show_food(screen)
 
     def show_food(self, screen):
         pygame.draw.rect(screen, self.color, [self.x, self.y, grid_size, grid_size])
-
 
 # Define a main function
 def main():
@@ -76,7 +87,8 @@ def main():
     snake = Snake()
     food = Food()
     screen = pygame.display.set_mode((screen_width, screen_height))
-
+    screen.fill(white)
+    score = 0
     # Define a variable to control the main loop
     running = True
     # Main loop
@@ -89,6 +101,10 @@ def main():
                 running = False
         snake.show_snake(screen)
         food.show_food(screen)
+        if (snake.x, snake.y) == (food.x, food.y):
+            score += 1
+            food.move_to_random_position(screen)
+            print("Score: {}".format(score))
         keys_pressed = pygame.key.get_pressed()
 
         if keys_pressed[pygame.K_UP]:
@@ -102,12 +118,10 @@ def main():
         else:
             direction = snake.direction
         snake.change_direction(direction)
-        pygame.draw.rect(screen, black, [snake.x, snake.y, grid_size, grid_size])
+        pygame.draw.rect(screen, white, [snake.x, snake.y, grid_size, grid_size])
         snake.x, snake.y = snake.move()
         snake.show_snake(screen)
         pygame.display.update()
-        print(snake.x, snake.y)
-        print(food.x, food.y)
         clock.tick(10)
 
 
