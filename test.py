@@ -10,49 +10,6 @@ black = (0, 0, 0)
 # Game clock
 clock = pygame.time.Clock()
 
-# Define a main function
-def main():
-    # Initialize the pygame module
-    pygame.init()
-    pygame.display.set_caption("Snake Game")
-    snake = Snake()
-    food = Food()
-    screen = pygame.display.set_mode((screen_width, screen_height))
-
-    # Define a variable to control the main loop
-    running = True
-    # Main loop
-    while running:
-        # Event handling, gets all event from the event queue
-        for event in pygame.event.get():
-            # only do something if the event is of type QUIT
-            if event.type == pygame.QUIT:
-                # change the value to False, to exit the main loop
-                running = False
-        snake.show_snake(screen)
-        food.show_food(screen)
-        keys_pressed = pygame.key.get_pressed()
-
-        if keys_pressed[pygame.K_UP]:
-            direction = 'up'
-        elif keys_pressed[pygame.K_DOWN]:
-            direction = 'down'
-        elif keys_pressed[pygame.K_RIGHT]:
-            direction = 'right'
-        elif keys_pressed[pygame.K_LEFT]:
-            direction = 'left'
-        else:
-            direction = snake.direction
-        snake.change_direction(direction)
-        pygame.draw.rect(screen, black, [snake.x, snake.y, grid_size, grid_size])
-        snake.x, snake.y = snake.move()
-        snake.show_snake(screen)
-        pygame.display.update()
-        print(snake.x, snake.y)
-        print(food.x, food.y)
-        clock.tick(10)
-
-
 class Snake:
     def __init__(self):
         # Starting the snakes at the middle of the screen
@@ -109,6 +66,52 @@ class Food:
 
     def show_food(self, screen):
         pygame.draw.rect(screen, self.color, [self.x, self.y, grid_size, grid_size])
+
+
+# Define a main function
+def main():
+    # Initialize the pygame module
+    pygame.init()
+    pygame.display.set_caption("Snake Game")
+    snake = Snake()
+    food = Food()
+    screen = pygame.display.set_mode((screen_width, screen_height))
+
+    # Define a variable to control the main loop
+    running = True
+    # Main loop
+    while running:
+        # Event handling, gets all event from the event queue
+        for event in pygame.event.get():
+            # only do something if the event is of type QUIT
+            if event.type == pygame.QUIT:
+                # change the value to False, to exit the main loop
+                running = False
+        snake.show_snake(screen)
+        food.show_food(screen)
+        keys_pressed = pygame.key.get_pressed()
+
+        if keys_pressed[pygame.K_UP]:
+            direction = 'up'
+        elif keys_pressed[pygame.K_DOWN]:
+            direction = 'down'
+        elif keys_pressed[pygame.K_RIGHT]:
+            direction = 'right'
+        elif keys_pressed[pygame.K_LEFT]:
+            direction = 'left'
+        else:
+            direction = snake.direction
+        snake.change_direction(direction)
+        pygame.draw.rect(screen, black, [snake.x, snake.y, grid_size, grid_size])
+        snake.x, snake.y = snake.move()
+        snake.show_snake(screen)
+        pygame.display.update()
+        print(snake.x, snake.y)
+        print(food.x, food.y)
+        clock.tick(10)
+
+
+
 
 
 
