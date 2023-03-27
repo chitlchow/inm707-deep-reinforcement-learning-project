@@ -26,19 +26,17 @@ class Snake:
             x -= self.size
         else:
             x += self.size
-
-        # If the snake is going out of the boundary in the x-direction
-
         # Return the x and y coordinates
         return x, y
+
     def hit_boarder(self):
         screen_info = pygame.display.Info()
-        if self.x > screen_info.current_w or self.x< 0 or self.y > screen_info.current_h or self.y <0:
+        if self.x > screen_info.current_w or self.x < 0 \
+            or self.y > screen_info.current_h or self.y < 0:
             return True
         return False
 
     def change_direction(self, direction):
-
         if direction == 'up' and self.direction != 'down':
             self.direction = 'up'
         elif direction == 'down' and self.direction != 'up':
