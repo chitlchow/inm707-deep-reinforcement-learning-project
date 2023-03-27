@@ -1,84 +1,59 @@
-import random
 import pygame
+import sys
+import random
 from src.snake import Snake
 from src.food import Food
+def drawGrid(surface):
+    for y in range(0, int(grid_height)):
+        for x in range(0, int(grid_width)):
+            if (x+y)%2 == 0:
+                r = pygame.Rect((x*gridsize, y*gridsize), (gridsize,gridsize))
+                pygame.draw.rect(surface,(93,216,228), r)
+            else:
+                rr = pygame.Rect((x*gridsize, y*gridsize), (gridsize,gridsize))
+                pygame.draw.rect(surface, (84,194,205), rr)
 
-# Environment Parameters
-screen_width = 500
-screen_height = 500
-grid_size = 20
-black = (0, 0, 0)
-white = (255, 255, 255)
-# Game clock
-clock = pygame.time.Clock()
+screen_width = 480
+screen_height = 480
 
-# Define a main function
+gridsize = 20
+grid_width = screen_width/gridsize
+grid_height = screen_height/gridsize
+
+up = (0,-1)
+down = (0,1)
+left = (-1,0)
+right = (1,0)
+
 def main():
-    # Initialize the pygame module
     pygame.init()
-    pygame.display.set_caption("Snake Game")
 
-    # Initialize the snake and food on the screen
+    clock = pygame.time.Clock()
+    screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
+
+    surface = pygame.Surface(screen.get_size())
+    surface = surface.convert()
+    drawGrid(surface)
+
     snake = Snake()
-    food = Food(x=random.randrange(0, screen_width, 20), y=random.randrange(0, screen_height, 20))
+    food = Food()
 
-    # set up the screen
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    screen.fill(white)
+    myfont = pygame.font.SysFont("monospace",16)
 
-    # Environment variable
-    score = 0
-    # Define a variable to control the main loop
-    game_over = False
-
-    # Game loop, continue when the game is not over
-    while not game_over:
-        snake.show_snake(screen)
-        food.show_food(screen)
-
-        # Event handling, gets all event from the event queue
-        for event in pygame.event.get():
-            # only do something if the event is of type QUIT
-            if event.type == pygame.QUIT:
-                # Set the value to False for exiting the main loop
-                game_over = False
-
-        # Check if the snake eat the food - means they have the same coordinate
-        if (snake.x, snake.y) == (food.x, food.y):
-            # Add score
-            score += 1
-            # Move the food object to a different position
-            food.move_to_random_position(screen)
-            # Print out the score that the snake got
-            print("Score: {}".format(score))
-
-        # Get key pressed
-        keys_pressed = pygame.key.get_pressed()
-
-        # Move the snake according the directional key pressed
-        # The pygame.KEY_Name returns the ASCII number of the key
-        if keys_pressed[pygame.K_UP]:
-            direction = 'up'
-        elif keys_pressed[pygame.K_DOWN]:
-            direction = 'down'
-        elif keys_pressed[pygame.K_RIGHT]:
-            direction = 'right'
-        elif keys_pressed[pygame.K_LEFT]:
-            direction = 'left'
-        else:
-            direction = snake.direction
-        snake.change_direction(direction)
-
-        # If the snake hit the boarder, terminate game and break the loop
-        if snake.hit_boarder():
-            pygame.quit()
-            break
-
-        pygame.draw.rect(screen, white, [snake.x, snake.y, grid_size, grid_size])
-        snake.x, snake.y = snake.move()
-        snake.show_snake(screen)
-        pygame.display.update()
+    while (True):
         clock.tick(10)
+        snake.handle_keys()
+        drawGrid(surface)
+        snake.move()
+        if snake.get_head_position() == food.position:
+            snake.length += 1
+            snake.score += 1
+            food.randomize_position()
+        snake.draw(surface)
+        food.draw(surface)
+        screen.blit(surface, (0,0))
+        text = myfont.render("Score {0}".format(snake.score), 1, (0,0,0))
+        screen.blit(text, (5,10))
+        pygame.display.update()
 
-if __name__ == "__main__":
-    main()
+main()

@@ -1,56 +1,67 @@
 import random
 import pygame
+import sys
 
+up = (0,-1)
+down = (0,1)
+left = (-1,0)
+right = (1,0)
 
-class Snake:
+class Snake():
     def __init__(self):
-        # Starting the snakes at the middle of the screen
-        self.x = 240
-        self.y = 240
-        # Initialize a random direction for the snake to start
-        self.direction = random.choice(["up","down" ,"left", "right"])
-        # Set the color of the snake to Green
-        self.color = (0, 200, 0) # Color of the snake
-        self.size = 20
-        self.screen_info = pygame.display.Info()
+        self.length = 1
+        self.positions = [((pygame.display.Info().current_w/2), (pygame.display.Info().current_h/2))]
+        self.direction = random.choice([up, down, left, right])
+        self.color = (17, 24, 47)
+        # Special thanks to YouTubers Mini - Cafetos and Knivens Beast for raising this issue!
+        # Code adjustment courtesy of YouTuber Elija de Hoog
+        self.score = 0
+        self.gridsize = 20
 
-    # This function is purposed to move the snake along a single direction
-    def move(self):
-        # Get the current x and y position
-        x, y = self.x, self.y
-        # Change the position based on the direction it is moving
-        if self.direction == "up":
-            y -= self.size
-        elif self.direction == 'down':
-            y += self.size
-        elif self.direction == 'left':
-            x -= self.size
+
+    def get_head_position(self):
+        return self.positions[0]
+
+    def turn(self, point):
+        if self.length > 1 and (point[0]*-1, point[1]*-1) == self.direction:
+            return
         else:
-            x += self.size
-        # Return the x and y coordinates
-        return x, y
+            self.direction = point
 
-    def hit_boarder(self):
-        # Get the screen information
-        if self.x > self.screen_info.current_w or self.x < 0 \
-            or self.y > self.screen_info.current_h or self.y < 0:
-            return True
-        return False
+    def move(self):
+        cur = self.get_head_position()
+        x,y = self.direction
+        new = (((cur[0]+(x*self.gridsize))%pygame.display.Info().current_w/2), (cur[1]+(y*self.gridsize))%pygame.display.Info().current_h/2)
+        if len(self.positions) > 2 and new in self.positions[2:]:
+            self.reset()
+        else:
+            self.positions.insert(0,new)
+            if len(self.positions) > self.length:
+                self.positions.pop()
 
-    def change_direction(self, direction):
-        if direction == 'up' and self.direction != 'down':
-            self.direction = 'up'
-        elif direction == 'down' and self.direction != 'up':
-            self.direction = 'down'
-        elif direction == 'left' and self.direction != 'right':
-            self.direction = 'left'
-        elif direction == 'right' and self.direction != 'left':
-            self.direction = 'right'
+    def reset(self):
+        self.length = 1
+        self.positions = [((pygame.display.Info().current_w/2), (pygame.display.Info().current_h/2))]
+        self.direction = random.choice([up, down, left, right])
+        self.score = 0
 
-    def show_snake(self, screen):
-        pygame.draw.rect(screen, self.color, [self.x, self.y, self.size, self.size])
+    def draw(self,surface):
+        for p in self.positions:
+            r = pygame.Rect((p[0], p[1]), (self.gridsize, self.gridsize))
+            pygame.draw.rect(surface, self.color, r)
+            pygame.draw.rect(surface, (93,216, 228), r, 1)
 
-    # The sensor methods returns the state that it currently in:
-    # def state(self):
-    #     right
-    #     left
+    def handle_keys(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self.turn(up)
+                elif event.key == pygame.K_DOWN:
+                    self.turn(down)
+                elif event.key == pygame.K_LEFT:
+                    self.turn(left)
+                elif event.key == pygame.K_RIGHT:
+                    self.turn(right)    #     left
