@@ -1,4 +1,5 @@
 import numpy as np
+from snake import Snake
 
 class Agent:
     def __init__(self):
@@ -7,5 +8,6 @@ class Agent:
         self.alpha = 0.2
         self.action_set = ['up', 'down', 'left', 'right']
 
-    def update(self):
-        return self.R_matrix
+
+
+

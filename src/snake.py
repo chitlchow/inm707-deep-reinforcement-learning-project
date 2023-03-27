@@ -12,12 +12,13 @@ class Snake:
         # Set the color of the snake to Green
         self.color = (0, 200, 0) # Color of the snake
         self.size = 20
+        self.screen_info = pygame.display.Info()
 
+    # This function is purposed to move the snake along a single direction
     def move(self):
         # Get the current x and y position
         x, y = self.x, self.y
-
-        # Chnage the position based on the direction it is moving
+        # Change the position based on the direction it is moving
         if self.direction == "up":
             y -= self.size
         elif self.direction == 'down':
@@ -30,9 +31,9 @@ class Snake:
         return x, y
 
     def hit_boarder(self):
-        screen_info = pygame.display.Info()
-        if self.x > screen_info.current_w or self.x < 0 \
-            or self.y > screen_info.current_h or self.y < 0:
+        # Get the screen information
+        if self.x > self.screen_info.current_w or self.x < 0 \
+            or self.y > self.screen_info.current_h or self.y < 0:
             return True
         return False
 

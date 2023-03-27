@@ -17,15 +17,21 @@ def main():
     # Initialize the pygame module
     pygame.init()
     pygame.display.set_caption("Snake Game")
+
+    # Initialize the snake and food on the screen
     snake = Snake()
     food = Food(x=random.randrange(0, screen_width, 20), y=random.randrange(0, screen_height, 20))
+
+    # set up the screen
     screen = pygame.display.set_mode((screen_width, screen_height))
     screen.fill(white)
+
+    # Environment variable
     score = 0
     # Define a variable to control the main loop
     game_over = False
 
-    # Main loop
+    # Game loop, continue when the game is not over
     while not game_over:
         snake.show_snake(screen)
         food.show_food(screen)
@@ -34,7 +40,7 @@ def main():
         for event in pygame.event.get():
             # only do something if the event is of type QUIT
             if event.type == pygame.QUIT:
-                # change the value to False, to exit the main loop
+                # Set the value to False for exiting the main loop
                 game_over = False
 
         # Check if the snake eat the food - means they have the same coordinate
@@ -61,12 +67,13 @@ def main():
             direction = 'left'
         else:
             direction = snake.direction
+        snake.change_direction(direction)
 
         # If the snake hit the boarder, terminate game and break the loop
         if snake.hit_boarder():
             pygame.quit()
             break
-        snake.change_direction(direction)
+
         pygame.draw.rect(screen, white, [snake.x, snake.y, grid_size, grid_size])
         snake.x, snake.y = snake.move()
         snake.show_snake(screen)
