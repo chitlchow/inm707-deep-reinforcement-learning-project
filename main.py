@@ -3,7 +3,6 @@ import pygame
 from src.snake import Snake
 from src.food import Food
 
-
 # Environment Parameters
 screen_width = 500
 screen_height = 500
@@ -12,7 +11,6 @@ black = (0, 0, 0)
 white = (255, 255, 255)
 # Game clock
 clock = pygame.time.Clock()
-
 
 # Define a main function
 def main():
