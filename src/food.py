@@ -2,9 +2,7 @@ import random
 import pygame
 
 gridsize = 20
-
 class Food():
-
     def __init__(self):
         self.position = (0,0)
         self.color = (223, 163, 49)

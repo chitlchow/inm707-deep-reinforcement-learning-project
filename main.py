@@ -1,8 +1,8 @@
 import pygame
-import sys
-import random
 from src.snake import Snake
 from src.food import Food
+
+# Helper Function
 def drawGrid(surface):
     for y in range(0, int(grid_height)):
         for x in range(0, int(grid_width)):
