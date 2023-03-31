@@ -1,6 +1,8 @@
 import pygame
 from src.snake import Snake
 from src.food import Food
+import pandas as pd
+
 
 # Helper Function
 def drawGrid(surface):
@@ -13,8 +15,8 @@ def drawGrid(surface):
                 rr = pygame.Rect((x*gridsize, y*gridsize), (gridsize,gridsize))
                 pygame.draw.rect(surface, (84,194,205), rr)
 
-screen_width = 480
-screen_height = 480
+screen_width = 200
+screen_height = 200
 
 gridsize = 20
 grid_width = screen_width/gridsize
@@ -25,6 +27,7 @@ down = (0,1)
 left = (-1,0)
 right = (1,0)
 
+# Main program for the game
 def main():
     pygame.init()
 
@@ -38,6 +41,7 @@ def main():
     snake = Snake()
     food = Food()
 
+    # Score label on screen
     myfont = pygame.font.SysFont("monospace",16)
 
     while (True):
