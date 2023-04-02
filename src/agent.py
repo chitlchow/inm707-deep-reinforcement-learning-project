@@ -10,6 +10,9 @@ class Agent:
         self.alpha = 0.2
         # Have to be programmed - based on the direction it is going
         self.action_set = ['up', 'down', 'left', 'right']
+
+    def build_Q(self, state):
+        return self.
 #   Q-Matrix for the agent
 #   R-Matrix: Give rewards based on the city block distance
 #   Definition:

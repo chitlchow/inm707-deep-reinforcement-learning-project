@@ -15,6 +15,10 @@ def drawGrid(surface):
                 rr = pygame.Rect((x*gridsize, y*gridsize), (gridsize,gridsize))
                 pygame.draw.rect(surface, (84,194,205), rr)
 
+
+def get_state(snake, food):
+    return snake.positions, food.position
+
 screen_width = 200
 screen_height = 200
 
@@ -59,5 +63,6 @@ def main():
         text = myfont.render("Score {0}".format(snake.score), 1, (0,0,0))
         screen.blit(text, (5,10))
         pygame.display.update()
+        print(get_state(snake, food))
 
 main()
