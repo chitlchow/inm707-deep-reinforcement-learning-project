@@ -6,7 +6,7 @@ up = (0,-1)
 down = (0,1)
 left = (-1,0)
 right = (1,0)
-gridsize = 20
+
 class Snake():
     def __init__(self):
         self.length = 1
@@ -63,4 +63,4 @@ class Snake():
                     self.turn(left)
                 elif event.key == pygame.K_RIGHT:
                     self.turn(right)
-
+gridsize = 20

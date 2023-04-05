@@ -19,6 +19,10 @@ def drawGrid(surface):
 def get_state(snake, food):
     return snake.positions, food.position
 
+def update_Q_matrix(Q, snake, food):
+    current_state = get_state(snake, food)
+    current_direction = snake.direction
+
 screen_width = 200
 screen_height = 200
 
