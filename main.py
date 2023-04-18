@@ -88,8 +88,8 @@ def snake_food_direction(snake, food):
     return [food_up, food_down, food_right, food_left]
 
 
-screen_width = 600
-screen_height = 600
+screen_width = 200
+screen_height = 200
 
 gridsize = 20
 grid_width = screen_width/gridsize
@@ -132,27 +132,28 @@ def main():
         clock.tick(game_speed)
         # Make move decision
         # Get state and actions
+        drawGrid(surface)
+        reward = 0
         current_state = get_state(snake, food)
         action = learner.get_action(current_state)
         snake.turn(learner.actions[action])
-
-        # snake.handle_keys()
-        # snake.turn(action)
-        reward = 0
-        drawGrid(surface)
         crash = snake.move()
         new_state = get_state(snake, food)
-        # Placeholder - for getting the snake and food state
-        # Check if the snake is out of space
+
         if crash:
             learner.history.append(score)
+            # Reset score
             score = 0
             reward = -10
             episode += 1
             new_state = get_state(snake, food)
+            learner.update_epsilon()
             reset_game(snake, food)
             if episode%25 ==0:
-                print("Mean Score: {}".format(np.mean(np.array(learner.history))))
+                # print(learner.Q_tables)
+
+                print("EP: {}, Mean Score: {}, epsilon: {}".format(episode, np.mean(np.array(learner.history)), learner.epsilon))
+
                 learner.history = []
 
 
@@ -170,12 +171,16 @@ def main():
         if steps_without_food == 1000:
             score = 0
             episode += 1
+            learner.update_epsilon()
             if episode%25 ==0:
-                print("Mean Score: {}".format(np.mean(np.array(learner.history))))
-
-
+                print("EP: {}, Mean Score: {}, epsilon: {}".format(episode, np.mean(np.array(learner.history)), learner.epsilon))
+            learner.update_epsilon()
             reset_game(snake, food)
 
+        learner.update_Q_valeus(old_state=current_state,
+                                new_state=new_state,
+                                action=action,
+                                reward=reward)
         snake.draw(surface)
         food.draw(surface)
 
@@ -187,13 +192,4 @@ def main():
         screen.blit(ep, (5, 30))
 
         pygame.display.update()
-
-
-        # Compute new Q-values
-        learner.update_Q_valeus(old_state=current_state,
-                                new_state=new_state,
-                                action=action,
-                                reward=reward)
-
-
 main()

@@ -42,10 +42,11 @@ class QLearner:
         self.Q_tables = np.zeros((2,2,2,2,2,2,2,2,2,2,2,2,4))   # Depends on the State and Actions
 
         # Q learning Parameters
-        self.epsilon = 0.8
+        self.epsilon = 1.0
         self.lr = 0.01
-        self.discount_rate = 0.95
-
+        self.discount_rate = 0.99
+        self.epsilon_discount = 0.999
+        self.min_epsilon = 0.001
         # State and Action for Q values
         self.history = []
 
@@ -64,13 +65,14 @@ class QLearner:
         # Return matrix of available actions
         return np.argmax(self.Q_tables[state])
 
+    def update_epsilon(self):
+        self.epsilon = max(self.epsilon * self.epsilon_discount, self.min_epsilon)
 
     # Reset the learner
 
     def update_Q_valeus(self, old_state, new_state, action, reward):
-        self.Q_tables[old_state][action] = \
-            (1 - self.lr) * self.Q_tables[old_state][action] + self.lr \
-            * (reward + self.discount_rate * max(self.Q_tables[new_state]))
+        self.Q_tables[old_state][action] = (1 - self.lr) * self.Q_tables[old_state][action] + \
+                                           self.lr  * (reward + self.discount_rate * max(self.Q_tables[new_state]))
 
 
 #   Q-Matrix for the agent
