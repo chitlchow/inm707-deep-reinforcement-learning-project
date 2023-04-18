@@ -88,8 +88,8 @@ def snake_food_direction(snake, food):
     return [food_up, food_down, food_right, food_left]
 
 
-screen_width = 200
-screen_height = 200
+screen_width = 400
+screen_height = 400
 
 gridsize = 20
 grid_width = screen_width/gridsize
@@ -107,7 +107,7 @@ game_speed = 100000
 # Main program for the game
 def reset_game(snake, food):
     snake.length = 1
-    snake.positions = [(pygame.display.Info().current_w/2, pygame.display.Info().current_h/2)]
+    snake.positions = [(screen_width/2, screen_height/2)]
     food.randomize_position()
 
 
@@ -121,8 +121,8 @@ def main():
     drawGrid(surface)
 
     score = 0
-    snake = Snake()
-    food = Food()
+    snake = Snake(screen_width, screen_height)
+    food = Food(screen_width, screen_height)
 
     # Score label on screen
     score_display = pygame.font.SysFont("monospace",16)

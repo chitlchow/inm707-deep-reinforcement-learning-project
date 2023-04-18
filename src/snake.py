@@ -9,9 +9,11 @@ right = (1,0)
 gridsize = 20
 
 class Snake():
-    def __init__(self):
+    def __init__(self, screen_width, screen_height):
         self.length = 1
-        self.positions = [((pygame.display.Info().current_w/2), (pygame.display.Info().current_h/2))]
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.positions = [((screen_width/2), (screen_height/2))]
         self.direction = random.choice([up, down, left, right])
         self.color = (17, 24, 47)
         # Special thanks to YouTubers Mini - Cafetos and Knivens Beast for raising this issue!
@@ -38,8 +40,8 @@ class Snake():
         if len(self.positions) > 2 and new in self.positions[2:]:
             return True
 
-        elif new[0] > pygame.display.Info().current_w \
-                or new[1] > pygame.display.Info().current_h \
+        elif new[0] > self.screen_width \
+                or new[1] > self.screen_height \
                 or new[0] < 0\
                 or new[1] < 0:
             return True
