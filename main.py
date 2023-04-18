@@ -114,16 +114,16 @@ def reset_game(snake, food):
 def main():
     pygame.init()
     clock = pygame.time.Clock()
-    screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
+    # screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
     learner = QLearner(screen_width, screen_height, gridsize)
-    surface = pygame.Surface(screen.get_size())
-    surface = surface.convert()
-    drawGrid(surface)
+    # surface = pygame.Surface(screen.get_size())
+    # surface = surface.convert()
+    # drawGrid(surface)
 
     score = 0
     snake = Snake(screen_width, screen_height)
     food = Food(screen_width, screen_height)
-
+    training_history = []
     # Score label on screen
     score_display = pygame.font.SysFont("monospace",16)
     steps_without_food = 0
@@ -132,7 +132,7 @@ def main():
         clock.tick(game_speed)
         # Make move decision
         # Get state and actions
-        drawGrid(surface)
+        # drawGrid(surface)
         reward = 0
         current_state = get_state(snake, food)
         action = learner.get_action(current_state)
@@ -143,6 +143,7 @@ def main():
         if crash:
             learner.history.append(score)
             # Reset score
+            training_history.append((episode, score, learner.epsilon))
             score = 0
             reward = -10
             episode += 1
@@ -169,6 +170,7 @@ def main():
             steps_without_food += 1
 
         if steps_without_food == 1000:
+            training_history.append((episode, score, learner.epsilon))
             score = 0
             episode += 1
             learner.update_epsilon()
@@ -181,15 +183,19 @@ def main():
                                 new_state=new_state,
                                 action=action,
                                 reward=reward)
-        snake.draw(surface)
-        food.draw(surface)
+        # snake.draw(surface)
+        # food.draw(surface)
 
-        screen.blit(surface, (0,0))
+        # screen.blit(surface, (0,0))
         # Game running information
         text = score_display.render("Score {0}".format(score), 1, (0,0,0))
         ep = score_display.render("EP: {}".format(episode), 1, (0,0,0))
-        screen.blit(text, (5, 10))
-        screen.blit(ep, (5, 30))
+        # screen.blit(text, (5, 10))
+        # screen.blit(ep, (5, 30))
+        # Uncomment below to see the visual output
+        # pygame.display.update()
 
-        pygame.display.update()
+    training_history = pd.DataFrame(training_history, columns=['Episodes', 'Score', 'Epsilon'])
+    training_history.to_csv('training_history.csv')
+
 main()
