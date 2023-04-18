@@ -44,7 +44,7 @@ class QLearner:
         # Q learning Parameters
         self.epsilon = 1.0
         self.lr = 0.01
-        self.discount_rate = 0.95
+        self.discount_rate = 0.99
         self.epsilon_discount = 0.9991
         self.min_epsilon = 0.001
         # State and Action for Q values

@@ -5,6 +5,7 @@ from src.snake import Snake
 from src.food import Food
 from src.QLAgent import QLearner
 import pandas as pd
+import pickle
 
 
 # Helper Function
@@ -154,7 +155,8 @@ def main():
                 # print(learner.Q_tables)
 
                 print("EP: {}, Mean Score: {}, epsilon: {}".format(episode, np.mean(np.array(learner.history)), learner.epsilon))
-
+                with open("training_history/episode-{}.pickle".format(episode), 'wb') as file:
+                    pickle.dump(learner.Q_tables, file)
                 learner.history = []
 
 
