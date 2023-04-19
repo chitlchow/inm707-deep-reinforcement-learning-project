@@ -87,7 +87,10 @@ def snake_food_direction(snake, food):
 
     return [food_up, food_down, food_right, food_left]
 
-
+def reset_game(snake, food):
+    snake.length = 1
+    snake.positions = [(screen_width/2, screen_height/2)]
+    food.randomize_position()
 screen_width = 400
 screen_height = 400
 
@@ -104,17 +107,17 @@ score = 0
 num_episodes = 10000
 game_speed = 10000
 # Main program for the game
-def reset_game(snake, food):
-    snake.length = 1
-    snake.positions = [(screen_width/2, screen_height/2)]
-    food.randomize_position()
 
+alpha = 0.01
+gamma = 0.95
+epsilon_discount = 0.9992
 
-def main():
+def main(alpha, gamma, epsilon_discount):
     pygame.init()
     clock = pygame.time.Clock()
     # screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
-    learner = QLearner(screen_width, screen_height, gridsize)
+
+    learner = QLearner(screen_width, screen_height, gridsize, alpha, gamma, epsilon_discount)
     # surface = pygame.Surface(screen.get_size())
     # surface = surface.convert()
     # drawGrid(surface)
@@ -174,7 +177,7 @@ def main():
             score = 0
             episode += 1
             learner.update_epsilon()
-            if episode%25 ==0:
+            if episode%25 == 0:
                 with open("training_history/episode-{}.pickle".format(episode), 'wb') as file:
                     pickle.dump(learner.Q_tables, file)
                 print("EP: {}, Mean Score: {}, epsilon: {}".format(episode,
@@ -200,6 +203,6 @@ def main():
         # pygame.display.update()
 
     training_history = pd.DataFrame(training_history, columns=['Episodes', 'Score', 'Epsilon'])
-    training_history.to_csv('training_history.csv')
+    training_history.to_csv('training_history-({}, {}, {}).csv'.format(alpha, gamma, epsilon_discount))
 
-main()
+main(alpha, gamma, epsilon_discount)

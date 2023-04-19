@@ -9,7 +9,7 @@ left = (-1,0)
 right = (1,0)
 
 class QLearner:
-    def __init__(self, display_width, display_height, grid_size):
+    def __init__(self, display_width, display_height, grid_size, alpha, gamma, epsilon_discount):
         self.display_width = display_width
         self.disply_height = display_height
         self.grid_size = grid_size
@@ -40,9 +40,9 @@ class QLearner:
 
         # Q learning Parameters
         self.epsilon = 1.0
-        self.lr = 0.01
-        self.discount_rate = 0.95
-        self.epsilon_discount = 0.9991
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon_discount = epsilon_discount
         self.min_epsilon = 0.001
         # State and Action for Q values
         self.history = []
@@ -68,12 +68,5 @@ class QLearner:
     # Reset the learner
 
     def update_Q_valeus(self, old_state, new_state, action, reward):
-        self.Q_tables[old_state][action] = (1 - self.lr) * self.Q_tables[old_state][action] + \
-                                           self.lr  * (reward + self.discount_rate * max(self.Q_tables[new_state]))
-
-
-#   Q-Matrix for the agent
-#   R-Matrix: Give rewards based on the city block distance
-#   Definition:
-#    - based on the state (distance between food and snake, direction)
-
+        self.Q_tables[old_state][action] = (1 - self.alpha) * self.Q_tables[old_state][action] + \
+                                           self.alpha  * (reward + self.gamma * max(self.Q_tables[new_state]))
