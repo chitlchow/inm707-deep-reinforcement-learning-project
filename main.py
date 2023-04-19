@@ -1,4 +1,3 @@
-import random
 import numpy as np
 import pygame
 from src.snake import Snake
@@ -103,8 +102,7 @@ right = (1,0)
 
 score = 0
 num_episodes = 10000
-
-game_speed = 100000
+game_speed = 10000
 # Main program for the game
 def reset_game(snake, food):
     snake.length = 1

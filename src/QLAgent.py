@@ -14,7 +14,6 @@ class QLearner:
         self.disply_height = display_height
         self.grid_size = grid_size
 
-
         # Definition of the states:
         #       Current Directions: up, down, right, left
         #       Food positions relative to the snake: up, down, right, left
@@ -22,8 +21,6 @@ class QLearner:
         # Actions: Up, Down, right, and left
         # Consider taking the states as a binary variables, each will have 2,
         # then you will have 2^12 *4 = 16384 states
-
-
         # I'm going to define the dimension of the table as the following:
         # current_up: 0, 1
         # current_down: 0,1
@@ -44,7 +41,7 @@ class QLearner:
         # Q learning Parameters
         self.epsilon = 1.0
         self.lr = 0.01
-        self.discount_rate = 0.99
+        self.discount_rate = 0.95
         self.epsilon_discount = 0.9991
         self.min_epsilon = 0.001
         # State and Action for Q values
