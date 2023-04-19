@@ -177,7 +177,9 @@ def main():
             if episode%25 ==0:
                 with open("training_history/episode-{}.pickle".format(episode), 'wb') as file:
                     pickle.dump(learner.Q_tables, file)
-                print("EP: {}, Mean Score: {}, epsilon: {}".format(episode, np.mean(np.array(learner.history)), learner.epsilon))
+                print("EP: {}, Mean Score: {}, epsilon: {}".format(episode,
+                                                                   np.mean(np.array(learner.history)),
+                                                                   learner.epsilon))
             learner.update_epsilon()
             reset_game(snake, food)
 
