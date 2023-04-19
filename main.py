@@ -5,6 +5,7 @@ from src.food import Food
 from src.QLAgent import QLearner
 import pandas as pd
 import pickle
+import time
 
 
 # Helper Function
@@ -104,7 +105,7 @@ left = (-1,0)
 right = (1,0)
 
 score = 0
-num_episodes = 10000
+num_episodes = 30000
 game_speed = 10000
 # Main program for the game
 
@@ -130,7 +131,10 @@ def main(alpha, gamma, epsilon_discount):
     score_display = pygame.font.SysFont("monospace",16)
     steps_without_food = 0
     episode = 1
+
     while episode <= num_episodes:
+        start = time.time()
+
         clock.tick(game_speed)
         # Make move decision
         # Get state and actions
