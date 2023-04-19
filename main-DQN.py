@@ -198,6 +198,6 @@ def main():
         # pygame.display.update()
 
     training_history = pd.DataFrame(training_history, columns=['Episodes', 'Score', 'Epsilon'])
-    training_history.to_csv('training_history.csv')
+    training_history.to_csv('result-dataset/training_history.csv')
 
 main()

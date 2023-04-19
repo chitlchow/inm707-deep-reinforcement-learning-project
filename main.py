@@ -201,8 +201,7 @@ def main(alpha, gamma, epsilon_discount):
         # screen.blit(ep, (5, 30))
         # Uncomment below to see the visual output
         # pygame.display.update()
-
     training_history = pd.DataFrame(training_history, columns=['Episodes', 'Score', 'Epsilon'])
-    training_history.to_csv('training_history-({}, {}, {}).csv'.format(alpha, gamma, epsilon_discount))
+    training_history.to_csv('result-dataset/training_history-({}, {}, {}).csv'.format(alpha, gamma, epsilon_discount))
 
 main(alpha, gamma, epsilon_discount)
