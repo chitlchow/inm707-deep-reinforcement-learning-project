@@ -3,9 +3,10 @@ import pygame
 from src.snake import Snake
 from src.food import Food
 from src.DQN import DQN_Agent
+from src.QLAgent import QLearner
 import pandas as pd
 import pickle
-
+import time
 
 # Helper Function
 def drawGrid(surface):
@@ -68,10 +69,13 @@ def snake_food_direction(snake, food):
     # Compute the difference in coordinates
     delta_x = head_pos[0] - food_pos[0]
     delta_y = head_pos[0] - food_pos[0]
+
+    # Prepare variables
     food_up = False
     food_down = False
     food_right = False
     food_left = False
+
     if delta_x < 0:
         food_right = True
         food_left = False
@@ -87,6 +91,10 @@ def snake_food_direction(snake, food):
 
     return [food_up, food_down, food_right, food_left]
 
+def reset_game(snake, food):
+    snake.length = 1
+    snake.positions = [(screen_width/2, screen_height/2)]
+    food.randomize_position()
 
 screen_width = 400
 screen_height = 400
@@ -101,103 +109,96 @@ left = (-1,0)
 right = (1,0)
 
 score = 0
-num_episodes = 10000
+num_episodes = 30000
 game_speed = 10000
+
+alpha = 0.01
+gamma = 0.9
+epsilon_discount = 0.9992
+
 # Main program for the game
-def reset_game(snake, food):
-    snake.length = 1
-    snake.positions = [(screen_width/2, screen_height/2)]
-    food.randomize_position()
 
-
-def main():
+def game_loop(alpha, gamma, epsilon_discount):
     pygame.init()
     clock = pygame.time.Clock()
-    # screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
-    learner = QLearner(screen_width, screen_height, gridsize)
-    # surface = pygame.Surface(screen.get_size())
-    # surface = surface.convert()
-    # drawGrid(surface)
+    learner = DQN_Agent(learning_rate=alpha, gamma=gamma, epsilon_decay=epsilon_discount)
 
-    score = 0
     snake = Snake(screen_width, screen_height)
     food = Food(screen_width, screen_height)
-    training_history = []
-    # Score label on screen
-    score_display = pygame.font.SysFont("monospace",16)
-    steps_without_food = 0
-    episode = 1
-    while episode <= num_episodes:
-        clock.tick(game_speed)
-        # Make move decision
-        # Get state and actions
-        # drawGrid(surface)
-        reward = 0
-        current_state = get_state(snake, food)
-        action = learner.get_action(current_state)
-        snake.turn(learner.actions[action])
-        crash = snake.move()
-        new_state = get_state(snake, food)
 
-        if crash:
-            learner.history.append(score)
-            # Reset score
-            training_history.append((episode, score, learner.epsilon))
-            score = 0
-            reward = -10
-            episode += 1
+    training_histories = []
+    start = time.time()
+    for episode in range(1, num_episodes + 1):
+        crash = False
+        score = 0
+        steps_without_food = 0
+        start = time.time()
+
+        learner.episode_history = []
+        learner.reward_history = []
+        learner.clear_memory()
+
+
+        while not crash or steps_without_food == 1000:
+            clock.tick(game_speed)
+            reward = 0
+
+            # Agent making moves
+            current_state = get_state(snake, food)
+            action = learner.get_action(current_state)
+            snake.turn(learner.actions[action])
+            crash = snake.move()
             new_state = get_state(snake, food)
-            learner.update_epsilon()
-            reset_game(snake, food)
-            if episode%25 ==0:
-                # print(learner.Q_tables)
+            # Check if the snake eat the food
+            if snake.get_head_position() == food.position:
+                snake.length += 1
+                score += 1
+                reward = 10
+                # Reset the counter
+                steps_without_food = 0
+                # new_state = get_state(snake, food)
+                food.randomize_position()
+            else:
+                steps_without_food += 1
 
-                print("EP: {}, Mean Score: {}, epsilon: {}".format(episode, np.mean(np.array(learner.history)), learner.epsilon))
-                with open("training_history/episode-{}.pickle".format(episode), 'wb') as file:
-                    pickle.dump(learner.Q_tables, file)
-                learner.history = []
+            # Case where episodes is going to be terminated
+            if crash or steps_without_food == 1000:
+                # Break the loop if crashing or timeout
+                reward = -10
 
 
-        # Check if the snake eat the food
-        if snake.get_head_position() == food.position:
-            snake.length += 1
-            score += 1
-            reward = 1
-            # Reset the counter
-            steps_without_food = 0
-            food.randomize_position()
-        else:
-            steps_without_food += 1
+            # Update the Q-values
 
-        if steps_without_food == 1000:
-            training_history.append((episode, score, learner.epsilon))
-            score = 0
-            episode += 1
-            learner.update_epsilon()
-            if episode%25 ==0:
-                with open("training_history/episode-{}.pickle".format(episode), 'wb') as file:
-                    pickle.dump(learner.Q_tables, file)
-                print("EP: {}, Mean Score: {}, epsilon: {}".format(episode, np.mean(np.array(learner.history)), learner.epsilon))
-            learner.update_epsilon()
-            reset_game(snake, food)
+            learner.reward_history.append(reward)
 
-        learner.update_Q_valeus(old_state=current_state,
-                                new_state=new_state,
-                                action=action,
-                                reward=reward)
-        # snake.draw(surface)
-        # food.draw(surface)
+            # Memorize step
+            learner.memorize(current_state, reward=reward, action=action, new_state=new_state)
+            learner.train_step(current_state, action, reward, new_state)
 
-        # screen.blit(surface, (0,0))
-        # Game running information
-        text = score_display.render("Score {0}".format(score), 1, (0,0,0))
-        ep = score_display.render("EP: {}".format(episode), 1, (0,0,0))
-        # screen.blit(text, (5, 10))
-        # screen.blit(ep, (5, 30))
-        # Uncomment below to see the visual output
-        # pygame.display.update()
+            if learner.short_memories_length == 10:
+                learner.train_short_memories()
+                learner.clear_memory()
 
-    training_history = pd.DataFrame(training_history, columns=['Episodes', 'Score', 'Epsilon'])
+
+        end = time.time()
+        ep_time = end - start
+        training_histories.append((episode, score, learner.epsilon, ep_time))
+
+        # Reset the environment
+        learner.score_history.append(score)
+        learner.update_epsilon()
+        reset_game(snake, food)
+        # print("EP: {}, Score: {}".format(episode, score))
+        if episode % 25 == 0:
+            print("EP: {}, Mean Score: {:.2f}, epsilon: {:.4f}, episode time: {:.6f}"\
+                  .format(episode,np.mean(np.array(learner.score_history)),learner.epsilon, ep_time))
+        # with open("training_history/episode-{}.pickle".format(episode), 'wb') as file:
+                # pickle.dump(learner.Q_tables, file)
+                # pass
+            # Clear the history of last 25 episodes
+            learner.score_history = []
+
+    training_history = pd.DataFrame(training_histories, columns=['Episodes', 'Score', 'Epsilon', 'Episode Time'])
     training_history.to_csv('result-dataset/training_history.csv')
 
-main()
+game_loop(alpha, gamma, epsilon_discount)
