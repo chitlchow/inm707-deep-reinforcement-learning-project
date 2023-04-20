@@ -2,12 +2,18 @@ import torch
 from torch import nn
 
 class DQN_Agent():
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, output_dim):
         self.network = DQNetwork(
             input_dim=input_dim,
             output_dim=output_dim
         )
-    def
+        self.loss_func = nn.MSELoss()
+
+    def update_network(self, history):
+        for past in history:
+
+
+
 
 class DQNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
