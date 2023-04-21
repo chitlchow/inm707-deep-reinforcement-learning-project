@@ -112,9 +112,9 @@ game_speed = 10000
 alpha = 0.01
 gamma = 0.95
 epsilon_discount = 0.9992
-
+time_steps = []
 def main(alpha, gamma, epsilon_discount):
-    pygame.init()
+
     clock = pygame.time.Clock()
     # screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
 
@@ -128,7 +128,7 @@ def main(alpha, gamma, epsilon_discount):
     food = Food(screen_width, screen_height)
     training_history = []
     # Score label on screen
-    score_display = pygame.font.SysFont("monospace",16)
+    # score_display = pygame.font.SysFont("monospace",16)
     steps_without_food = 0
     episode = 1
 
@@ -169,7 +169,7 @@ def main(alpha, gamma, epsilon_discount):
         if snake.get_head_position() == food.position:
             snake.length += 1
             score += 1
-            reward = 1
+            reward = 10
             # Reset the counter
             steps_without_food = 0
             food.randomize_position()
@@ -199,8 +199,8 @@ def main(alpha, gamma, epsilon_discount):
 
         # screen.blit(surface, (0,0))
         # Game running information
-        text = score_display.render("Score {0}".format(score), 1, (0,0,0))
-        ep = score_display.render("EP: {}".format(episode), 1, (0,0,0))
+        # text = score_display.render("Score {0}".format(score), 1, (0,0,0))
+        # ep = score_display.render("EP: {}".format(episode), 1, (0,0,0))
         # screen.blit(text, (5, 10))
         # screen.blit(ep, (5, 30))
         # Uncomment below to see the visual output

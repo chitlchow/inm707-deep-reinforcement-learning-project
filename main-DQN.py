@@ -3,7 +3,6 @@ import pygame
 from src.snake import Snake
 from src.food import Food
 from src.DQN import DQN_Agent
-from src.QLAgent import QLearner
 import pandas as pd
 import pickle
 import time
@@ -112,8 +111,8 @@ score = 0
 num_episodes = 30000
 game_speed = 10000
 
-alpha = 0.01
-gamma = 0.9
+alpha = 0.0001
+gamma = 0.99
 epsilon_discount = 0.9992
 
 # Main program for the game
@@ -141,7 +140,7 @@ def game_loop(alpha, gamma, epsilon_discount):
 
         while not crash or steps_without_food == 1000:
             clock.tick(game_speed)
-            reward = 0
+            reward = 1
 
             # Agent making moves
             current_state = get_state(snake, food)
@@ -175,7 +174,7 @@ def game_loop(alpha, gamma, epsilon_discount):
             learner.memorize(current_state, reward=reward, action=action, new_state=new_state)
             learner.train_step(current_state, action, reward, new_state)
 
-            if learner.short_memories_length == 10:
+            if learner.short_memories_size == 10:
                 learner.train_short_memories()
                 learner.clear_memory()
 

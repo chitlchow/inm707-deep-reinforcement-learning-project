@@ -3,7 +3,7 @@ from torch import nn
 from src.DQN import DQN_Agent, DQ_Network
 import numpy as np
 
-model = DQ_Network(12, 256, 4)
+model = DQ_Network(12, 300, 4)
 loss_func = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 gamma = 0.95

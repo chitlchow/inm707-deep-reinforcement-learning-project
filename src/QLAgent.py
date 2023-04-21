@@ -66,6 +66,8 @@ class QLearner:
         self.epsilon = max(self.epsilon * self.epsilon_discount, self.min_epsilon)
 
     # Reset the learner
+    def clear_history(self):
+        self.history = []
 
     def update_Q_valeus(self, old_state, new_state, action, reward):
         self.Q_tables[old_state][action] = (1 - self.alpha) * self.Q_tables[old_state][action] + \

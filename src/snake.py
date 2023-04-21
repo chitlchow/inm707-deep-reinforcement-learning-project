@@ -23,10 +23,30 @@ class Snake():
         return self.positions[0]
 
     def turn(self, point):
-        if self.length > 1 and (point[0]*-1, point[1]*-1) == self.direction:
-            return
+        if point == 'turn_right':
+            if self.direction == up:
+                self.direction = right
+            elif self.direction == down:
+                self.direction = left
+            elif self.direction == right:
+                self.direction = down
+            elif self.direction == left:
+                self.direction = up
+        elif point == 'turn_left':
+            if self.direction ==  up:
+                self.direction = left
+            elif self.direction == left:
+                self.direction = down
+            elif self.direction == down:
+                self.direction = right
+            elif self.direction == right:
+                self.direction = up
         else:
-            self.direction = point
+            self.direction
+        # if self.length > 1 and (point[0]*-1, point[1]*-1) == self.direction:
+        #     return
+        # else:
+        #     self.direction = point
 
     # Return True if crash
     def move(self):
