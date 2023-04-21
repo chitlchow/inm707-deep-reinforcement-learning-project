@@ -36,7 +36,7 @@ class QLearner:
         # danger_left: 0, 1
         # actions: up, down, left, right
 
-        self.Q_tables = np.zeros((2,2,2,2,2,2,2,2,2,2,2,2,4))   # Depends on the State and Actions
+        self.Q_tables = np.zeros((2,2,2,2,2,2,2,2,2,2,2,2,3))   # Depends on the State and Actions
 
         # Q learning Parameters
         self.epsilon = 1.0
@@ -49,16 +49,15 @@ class QLearner:
 
         # The action space, from state to actions
         self.actions = {
-            0: up,
-            1: down,
-            2: right,
-            3: left
+            0: 'straight',
+            1: 'turn_right',
+            2: 'turn_left'
         }
 
     def get_action(self, state):
         # Get random action by exploiting
         if random.random() < self.epsilon:
-            return random.choice([0,1,2,3])
+            return random.choice([0,1,2])
         # Return matrix of available actions
         return np.argmax(self.Q_tables[state])
 

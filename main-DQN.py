@@ -112,7 +112,7 @@ num_episodes = 30000
 game_speed = 100000
 
 alpha = 0.001
-gamma = 0.9
+gamma = 0.95
 epsilon_discount = 0.9992
 
 # Main program for the game
@@ -136,7 +136,7 @@ def game_loop(alpha, gamma, epsilon_discount):
         learner.clear_memory()
 
 
-        while not crash or steps_without_food == 100:
+        while not crash or steps_without_food == 1000:
             reward = 0
 
             # Agent making moves
@@ -152,14 +152,14 @@ def game_loop(alpha, gamma, epsilon_discount):
                 reward = 10
                 # Reset the counter
                 steps_without_food = 0
-                learner.train_short_memories()
+
                 # new_state = get_state(snake, food)
                 food.randomize_position()
             else:
                 steps_without_food += 1
 
             # Case where episodes is going to be terminated
-            if crash or steps_without_food == 100:
+            if crash or steps_without_food == 1000:
                 # Break the loop if crashing or timeout
                 reward = -10
 
@@ -170,9 +170,11 @@ def game_loop(alpha, gamma, epsilon_discount):
 
             # Memorize step
             learner.memorize(current_state, reward=reward, action=action, new_state=new_state)
-            learner.train_step(current_state, action, reward, new_state)
+            # learner.train_step(current_state, action, reward, new_state)
+            learner.train_short_memories()
 
-
+        learner.train_long_memories()
+        learner.clear_episode_memories()
         end = time.time()
         ep_time = end - start
         training_histories.append((episode, score, learner.epsilon, ep_time))
