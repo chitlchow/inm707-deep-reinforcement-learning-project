@@ -5,24 +5,20 @@ import numpy as np
 import random
 from collections import deque
 
-up = (0,-1)
-down = (0,1)
-left = (-1,0)
-right = (1,0)
-
 # Set up for the model to use any tensor processing device
-print(torch.has_mps)
-device = torch.device('cpu')
+if torch.backends.mps.is_available():
+    device = torch.device('cpu')
 
 class DQN_Agent():
     def __init__(self, learning_rate, gamma, epsilon_decay):
         # ANN model and parameters for training
-        self.model = DQ_Network(12, 300, 3)
-        self.model.to(device)
+        self.model = DQ_Network(12, 512, 3)
+        self.target_model = DQ_Network(12, 512, 3)
         self.learning_rate = learning_rate
         self.gamma = gamma
-        self.epsilon = 0.7
+        self.epsilon = 0
         self.epsilon_decay = epsilon_decay
+        self.min_epsilon = 0.01
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
         self.loss_func = nn.MSELoss()
 
@@ -57,18 +53,17 @@ class DQN_Agent():
         action = torch.tensor(action, dtype=torch.long).to(device)
 
 
-        q_current = self.model(current_state)
-        target = q_current.clone()
-        # print(q_current)
-        q_new = reward + self.gamma * torch.max(self.model(new_state))
+        q_current = self.model(current_state)[action]
+        q_next = torch.max(self.target_model(new_state))
+
+        q_expected = reward
+        if reward != -10:
+            q_expected = reward + self.gamma * q_next
         # print(target[action])
-        target[action] = q_new
-        # print(q_new)
-        # print(target)
-        # print(target, q_current)
+        q_next = q_expected
+
         self.optimizer.zero_grad()
-        loss = self.loss_func(target, q_current)
-        # print(loss)
+        loss = self.loss_func(q_next, q_current)
         loss.backward()
         self.optimizer.step()
 
@@ -80,37 +75,40 @@ class DQN_Agent():
         # Return matrix of available actions
         else:
             state_vector = np.array(state)
-            state_vector = torch.from_numpy(state_vector).type(torch.Tensor)
+            state_vector = torch.from_numpy(state_vector).type(torch.Tensor).to(device)
             # print(torch.argmax(self.model(state_vector)).item())
             return torch.argmax(self.model(state_vector)).item()
 
     def update_epsilon(self):
-        self.epsilon = max(self.epsilon* self.epsilon_decay, 0.001)
+        self.epsilon = max(self.epsilon* self.epsilon_decay, self.min_epsilon)
 
 
     def train_short_memories(self):
-        current_states = np.array(self.short_memories['states'])
-        current_states = torch.from_numpy(current_states).type(torch.Tensor)
-        new_states = np.array(self.short_memories['new_states'])
-        new_states = torch.from_numpy(new_states).type(torch.Tensor)
-        rewards = np.array(self.short_memories['rewards'])
-        rewards = torch.from_numpy(rewards).type(torch.Tensor)
+        if self.short_memories_size > 1:
+            current_states = np.array(self.short_memories['states'])
+            current_states = torch.from_numpy(current_states).type(torch.Tensor).to(device)
+            new_states = np.array(self.short_memories['new_states'])
+            new_states = torch.from_numpy(new_states).type(torch.Tensor).to(device)
+            rewards = np.array(self.short_memories['rewards'])
+            rewards = torch.from_numpy(rewards).type(torch.Tensor).to(device)
 
-        actions = np.array(self.short_memories['actions'])
-        actions = torch.from_numpy(actions).type(torch.long)
+            actions = np.array(self.short_memories['actions'])
+            actions = torch.from_numpy(actions).type(torch.long).to(device)
 
-        # print(actions.size(0))
-        actions = actions.reshape(1,10)
-        rewards = rewards.reshape(-1, 1)
+            # print(actions.size(0))
+            actions = actions.reshape(1,actions.size(0))
+            rewards = rewards.reshape(-1, 1)
 
-        q_pred = self.model(current_states).gather(1, actions).reshape(-1,1)
-        # This is a (10, 1) vector
-        q_new = rewards + self.gamma * torch.max(self.model(new_states), dim=1, keepdim=True)[0]
-        self.optimizer.zero_grad()
-        loss = self.loss_func(q_pred, q_new)
-        # print(loss)
-        loss.backward()
-        self.optimizer.step()
+            q_pred = self.model(current_states).gather(1, actions).reshape(-1,1)
+            # This is a (10, 1) vector
+            q_new = rewards + self.gamma * torch.max(self.target_model(new_states), dim=1, keepdim=True)[0]
+            # print(q_new)
+            self.optimizer.zero_grad()
+            loss = self.loss_func(q_pred, q_new)
+            # print(loss)
+            loss.backward()
+            self.optimizer.step()
+
 
     def memorize(self, current_state, reward, action, new_state):
         # Only memorize if there's space
@@ -120,6 +118,13 @@ class DQN_Agent():
             'actions': [action],
             'new_states': [new_state]
         }
+
+        # Check if memories full, if yes, than clear the earliest memories
+        if self.short_memories_size == 10:
+            for key in self.short_memories:
+                self.short_memories[key].pop(0)
+            self.short_memories_size -= 1
+        # Add new memories to the end of the list
         for key in new_memory:
             if key in self.short_memories:
                 self.short_memories[key].extend(new_memory[key])
@@ -127,6 +132,7 @@ class DQN_Agent():
 
     def clear_episode_history(self):
         self.episode_history = []
+
     def clear_memory(self):
         self.short_memories = {
             "states": [],
@@ -146,8 +152,8 @@ class DQ_Network(nn.Module):
         self.linear3 = nn.Linear(hidden_dim, output_dim)
         # self.softmax = nn.Softmax()
     def forward(self, x):
-        out = torch.relu(self.linear1(x))
-        out = torch.relu(self.linear2(out))
+        out = self.linear1(x)
+        out = self.linear2(out)
         out = self.linear3(out)
         # out = self.softmax(out)
         # Returns the Q-value of each actions

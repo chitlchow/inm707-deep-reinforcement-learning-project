@@ -109,19 +109,17 @@ right = (1,0)
 
 score = 0
 num_episodes = 30000
-game_speed = 10000
+game_speed = 100000
 
-alpha = 0.0001
-gamma = 0.99
+alpha = 0.001
+gamma = 0.9
 epsilon_discount = 0.9992
 
 # Main program for the game
 
 def game_loop(alpha, gamma, epsilon_discount):
-    pygame.init()
-    clock = pygame.time.Clock()
     learner = DQN_Agent(learning_rate=alpha, gamma=gamma, epsilon_decay=epsilon_discount)
-
+    clock = pygame.time.Clock()
     snake = Snake(screen_width, screen_height)
     food = Food(screen_width, screen_height)
 
@@ -138,9 +136,8 @@ def game_loop(alpha, gamma, epsilon_discount):
         learner.clear_memory()
 
 
-        while not crash or steps_without_food == 1000:
-            clock.tick(game_speed)
-            reward = 1
+        while not crash or steps_without_food == 100:
+            reward = 0
 
             # Agent making moves
             current_state = get_state(snake, food)
@@ -155,13 +152,14 @@ def game_loop(alpha, gamma, epsilon_discount):
                 reward = 10
                 # Reset the counter
                 steps_without_food = 0
+                learner.train_short_memories()
                 # new_state = get_state(snake, food)
                 food.randomize_position()
             else:
                 steps_without_food += 1
 
             # Case where episodes is going to be terminated
-            if crash or steps_without_food == 1000:
+            if crash or steps_without_food == 100:
                 # Break the loop if crashing or timeout
                 reward = -10
 
@@ -173,10 +171,6 @@ def game_loop(alpha, gamma, epsilon_discount):
             # Memorize step
             learner.memorize(current_state, reward=reward, action=action, new_state=new_state)
             learner.train_step(current_state, action, reward, new_state)
-
-            if learner.short_memories_size == 10:
-                learner.train_short_memories()
-                learner.clear_memory()
 
 
         end = time.time()
