@@ -16,7 +16,7 @@ class DQN_Agent():
         self.target_model = DQ_Network(12, 512, 3)
         self.learning_rate = learning_rate
         self.gamma = gamma
-        self.epsilon = 0
+        self.epsilon = 1.0
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = 0.01
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
