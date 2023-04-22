@@ -13,28 +13,27 @@ class DQN_Agent():
     def __init__(self, learning_rate, gamma, epsilon_decay):
         # ANN model and parameters for training
         self.model = DQ_Network(11, 256, 3)
-        self.target_model = DQ_Network(11, 256, 3)
-        self.target_model.load_state_dict(self.model.state_dict())
+        self.eval_model = DQ_Network(11, 256, 3)
+
         self.learning_rate = learning_rate
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+
+        # Q learning parameters
         self.gamma = gamma
         self.epsilon = 0.7
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = 0.01
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+
         self.loss_func = nn.MSELoss()
+
 
         # Short memories
         self.short_memories_size = 0
         self.short_memories = deque(maxlen=10)
-        #     {
-        #     "states": [],
-        #     "rewards": [],
-        #     "actions": [],
-        #     "new_states": [],
-        #     "game_overs": []
-        # }
-
         self.episode_memories = deque()
+
+        # Histories
+        self.ep_time_history = []
         self.score_history = []
         self.reward_history = []
         self.actions = {
@@ -42,29 +41,6 @@ class DQN_Agent():
             1: 'turn_right',
             2: 'turn_left'
         }
-
-    # def train_step(self, current_state, action, reward, new_state):
-    #     current_state = np.array(current_state)
-    #     current_state = torch.from_numpy(current_state).type(torch.Tensor).to(device)
-    #     new_state = np.array(new_state)
-    #     new_state = torch.from_numpy(new_state).type(torch.Tensor).to(device)
-    #
-    #     reward = torch.tensor(reward, dtype=torch.float).to(device)
-    #     action = torch.tensor(action, dtype=torch.long).to(device)
-    #     q_current = self.model(current_state)[action]
-    #     q_next = torch.max(self.target_model(new_state))
-    #
-    #     q_expected = reward
-    #     if reward != -10:
-    #         q_expected = reward + self.gamma * q_next
-    #     # print(target[action])
-    #     q_next = q_expected
-    #
-    #     self.optimizer.zero_grad()
-    #     loss = self.loss_func(q_next, q_current)
-    #     loss.backward()
-    #     self.optimizer.step()
-
 
     def get_action(self, state):
         # Get random action by exploiting
@@ -108,7 +84,7 @@ class DQN_Agent():
             # print(actions.size(0))
         q_pred = self.model(states)
         q_expected = q_pred.clone()
-        # print(actions)
+        # print(rewards)
         for i in range(len(game_overs)):
                 # This is a (10, 1) vector
             if game_overs != 1:
@@ -123,8 +99,8 @@ class DQN_Agent():
 
 
     def memorize(self, current_state, action, reward, new_state, game_over):
-        self.short_memories.append((current_state, reward, action, new_state, game_over))
-        self.episode_memories.append((current_state, reward, action, new_state, game_over))
+        self.short_memories.append((current_state, action, reward, new_state, game_over))
+        self.episode_memories.append((current_state, action, reward, new_state, game_over))
 
     def clear_memory(self):
         self.short_memories = deque(maxlen=10)
@@ -138,21 +114,18 @@ class DQ_Network(nn.Module):
         super(DQ_Network, self).__init__()
         self.linear1 = nn.Linear(input_dim, hidden_dim)
         self.linear2 = nn.Linear(hidden_dim, output_dim)
-        # self.linear3 = nn.Linear(hidden_dim, output_dim)
-        # self.softmax = nn.Softmax()
+
     def forward(self, x):
         out = torch.relu(self.linear1(x))
         out = self.linear2(out)
-        # out = self.linear3(out)
-        # out = self.softmax(out)
         # Returns the Q-value of each actions
         return out
 
     def save_model(self, f_name="model.pth"):
-        model_folder_path = '../DRL_models'
+        model_folder_path = 'DRL_models'
         if not os.path.exists(model_folder_path):
             os.mkdir(model_folder_path)
         f_name = os.path.join(model_folder_path, f_name)
-        torch.save(f_name)
+        torch.save(self.state_dict(), f_name)
 
 

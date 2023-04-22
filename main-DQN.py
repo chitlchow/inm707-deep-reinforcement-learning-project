@@ -128,7 +128,7 @@ down = (0,1)
 left = (-1,0)
 right = (1,0)
 
-num_episodes = 30000
+num_episodes = 10000
 game_speed = 1000
 
 alpha = 0.001
@@ -152,6 +152,7 @@ def game_loop(alpha, gamma, epsilon_discount):
         drawGrid(surface)
     training_histories = []
     start = time.time()
+    high = 0
     for episode in range(1, num_episodes + 1):
 
         crash = False
@@ -164,7 +165,7 @@ def game_loop(alpha, gamma, epsilon_discount):
         learner.clear_memory()
         game_over = False
 
-        while not crash or steps_without_food == 100:
+        while not crash or steps_without_food == 1000:
             reward = 0
 
             # Agent making moves
@@ -178,16 +179,20 @@ def game_loop(alpha, gamma, epsilon_discount):
             if snake.get_head_position() == food.position:
                 snake.length += 1
                 score += 1
+                if score >= high:
+                    high = score
+                    # Save the best model achieved new highest scores
+                    learner.model.save_model(f_name='snapshot-score-{}.pth'.format(high))
                 reward = 10
+
                 # Reset the counter
                 steps_without_food = 0
-                # new_state = get_state(snake, food)
                 food.randomize_position()
             else:
                 steps_without_food += 1
 
             # Case where episodes is going to be terminated
-            if crash or steps_without_food == 100:
+            if crash or steps_without_food == 1000:
                 # Break the loop if crashing or timeout
                 reward = -10
                 game_over = True
@@ -213,28 +218,32 @@ def game_loop(alpha, gamma, epsilon_discount):
                 screen.blit(surface, (0,0))
                 pygame.display.update()
 
-        # learner.train_long_memories()
+        learner.train_long_memories()
         learner.clear_episode_memories()
         end = time.time()
         ep_time = end - start
-        training_histories.append((episode, score, learner.epsilon, ep_time))
 
         # Reset the environment
         learner.score_history.append(score)
+        learner.ep_time_history.append(ep_time)
         learner.update_epsilon()
         reset_game(snake, food)
         # print("EP: {}, Score: {}".format(episode, score))
         if episode % 25 == 0:
             print("EP: {}, Mean Score: {:.2f}, epsilon: {:.4f}, episode time: {:.6f}, Highest: {}"\
-                  .format(episode,np.mean(np.array(learner.score_history)),
+                  .format(episode,
+                          np.mean(np.array(learner.score_history)),
                           learner.epsilon,
-                          ep_time,
-                          np.max(learner.score_history)))
-            learner.model.save_model(f_name='snapshot-ep-{}.pth'.format(episode))
+                          np.mean(np.array(learner.ep_time_history)),
+                          high))
+            training_histories.append((
+                episode, np.mean(np.array(learner.score_history)), learner.epsilon,
+                np.mean(np.array(learner.ep_time_history)), high)
+            )
             # Clear the history of last 25 episodes
             learner.score_history = []
 
-    training_history = pd.DataFrame(training_histories, columns=['Episodes', 'Score', 'Epsilon', 'Episode Time'])
-    training_history.to_csv('result-dataset/training_history.csv')
+    training_history = pd.DataFrame(training_histories, columns=['ep', 'mean_score_last25_ep', 'epsilon', 'ep_time', 'all_time_highest'])
+    training_history.to_csv('result-dataset/training_history_dqn.csv')
 
 game_loop(alpha, gamma, epsilon_discount)
