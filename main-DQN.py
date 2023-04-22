@@ -26,7 +26,6 @@ def get_state(snake, food):
     for action in actions:
         states.append(int(snake.direction == action))
 
-
     # 2: Check food position relative to the snake
     food_direction_states = snake_food_direction(snake, food)
 
@@ -49,7 +48,7 @@ def check_dangers(snake):
 
     actions = [up, right, down, left]
     # Check danger ahead
-    front_pos = (x + snake.direction[0], y + snake.direction[1])
+    front_pos = (x + snake.direction[0]*gridsize, y + snake.direction[1]*gridsize)
     # If it crash it selfs
     if  front_pos in snake.positions \
         or front_pos[0] >= screen_width \
@@ -61,7 +60,7 @@ def check_dangers(snake):
     #  Check right
     current_dir_index  = actions.index(snake.direction)
     right_step = actions[(current_dir_index + 1) % 4]
-    right_pos = (x + right_step[0], y + right_step[1])
+    right_pos = (x + right_step[0]*gridsize, y + right_step[1]*gridsize)
     if right_pos in snake.positions \
         or right_pos[0] >= screen_width \
         or right_pos[1] >= screen_height \
@@ -71,7 +70,7 @@ def check_dangers(snake):
 
     # Check left
     left_step = actions[(current_dir_index - 1) % 4]
-    left_pos = (x + left_step[0], y + left_step[1])
+    left_pos = (x + left_step[0]*gridsize, y + left_step[1]*gridsize)
 
     if left_pos in snake.positions \
         or left_pos[0] >= screen_width \
@@ -133,8 +132,8 @@ score = 0
 num_episodes = 30000
 game_speed = 1000
 
-alpha = 0.01
-gamma = 0.95
+alpha = 0.001
+gamma = 0.9
 epsilon_discount = 0.9992
 
 graphics = False
@@ -143,15 +142,15 @@ graphics = False
 
 def game_loop(alpha, gamma, epsilon_discount):
     learner = DQN_Agent(learning_rate=alpha, gamma=gamma, epsilon_decay=epsilon_discount)
-    clock = pygame.time.Clock()
+
     snake = Snake(screen_width, screen_height)
     food = Food(screen_width, screen_height)
     if graphics:
+        clock = pygame.time.Clock()
         screen = pygame.display.set_mode((screen_width, screen_height))
         surface = pygame.Surface(screen.get_size())
         surface.convert()
         drawGrid(surface)
-
     training_histories = []
     start = time.time()
     for episode in range(1, num_episodes + 1):
@@ -164,13 +163,10 @@ def game_loop(alpha, gamma, epsilon_discount):
         learner.episode_history = []
         learner.reward_history = []
         learner.clear_memory()
+        game_over = False
 
-
-        while not crash or steps_without_food == 1000:
+        while not crash or steps_without_food == 100:
             reward = 0
-            clock.tick(game_speed)
-
-
 
             # Agent making moves
             current_state = get_state(snake, food)
@@ -178,6 +174,7 @@ def game_loop(alpha, gamma, epsilon_discount):
             snake.turn(learner.actions[action])
             crash = snake.move()
             new_state = get_state(snake, food)
+
             # Check if the snake eat the food
             if snake.get_head_position() == food.position:
                 snake.length += 1
@@ -192,9 +189,10 @@ def game_loop(alpha, gamma, epsilon_discount):
                 steps_without_food += 1
 
             # Case where episodes is going to be terminated
-            if crash or steps_without_food == 1000:
+            if crash or steps_without_food == 100:
                 # Break the loop if crashing or timeout
                 reward = -10
+                game_over = True
 
 
             # Update the Q-values
@@ -202,10 +200,15 @@ def game_loop(alpha, gamma, epsilon_discount):
             learner.reward_history.append(reward)
 
             # Memorize step
-            learner.memorize(current_state, reward=reward, action=action, new_state=new_state)
+            learner.memorize(current_state,
+                             reward=reward,
+                             action=action,
+                             new_state=new_state,
+                             game_over=int(game_over))
             # learner.train_step(current_state, action, reward, new_state)
             learner.train_short_memories()
             if graphics:
+                clock.tick(game_speed)
                 drawGrid(surface)
                 snake.draw(surface)
                 food.draw(surface)

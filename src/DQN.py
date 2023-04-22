@@ -12,12 +12,12 @@ device = torch.device('cpu')
 class DQN_Agent():
     def __init__(self, learning_rate, gamma, epsilon_decay):
         # ANN model and parameters for training
-        self.model = DQ_Network(11, 512, 3)
-        self.target_model = DQ_Network(11, 512, 3)
+        self.model = DQ_Network(11, 64, 3)
+        self.target_model = DQ_Network(11, 64, 3)
         self.target_model.load_state_dict(self.model.state_dict())
         self.learning_rate = learning_rate
         self.gamma = gamma
-        self.epsilon = 0.6
+        self.epsilon = 0.7
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = 0.01
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
@@ -29,14 +29,17 @@ class DQN_Agent():
             "states": [],
             "rewards": [],
             "actions": [],
-            "new_states": []
+            "new_states": [],
+            "game_overs": []
         }
 
         self.episode_memories = {
             "states": [],
             "rewards": [],
             "actions": [],
-            "new_states": []
+            "new_states": [],
+            "game_overs": []
+
         }
         self.score_history = []
         self.reward_history = []
@@ -54,8 +57,6 @@ class DQN_Agent():
 
         reward = torch.tensor(reward, dtype=torch.float).to(device)
         action = torch.tensor(action, dtype=torch.long).to(device)
-
-
         q_current = self.model(current_state)[action]
         q_next = torch.max(self.target_model(new_state))
 
@@ -98,13 +99,16 @@ class DQN_Agent():
             actions = np.array(self.short_memories['actions'])
             actions = torch.from_numpy(actions).type(torch.long).to(device)
 
+            game_overs = np.array(self.short_memories['game_overs'])
+            game_overs = torch.from_numpy(game_overs).type(torch.float).to(device)
+
             # print(actions.size(0))
             actions = actions.reshape(1,actions.size(0))
             rewards = rewards.reshape(-1, 1)
-
             q_pred = self.model(current_states).gather(1, actions).reshape(-1,1)
             # This is a (10, 1) vector
-            q_new = rewards + self.gamma * torch.max(self.target_model(new_states), dim=1, keepdim=True)[0]
+            # print(game_overs.reshape(-1, 1))
+            q_new = rewards + self.gamma * torch.max(self.target_model(new_states), dim=1, keepdim=True)[0] *(1- game_overs.reshape(-1, 1))
             # print(q_new)
             self.optimizer.zero_grad()
             loss = self.loss_func(q_pred, q_new)
@@ -123,6 +127,8 @@ class DQN_Agent():
 
             actions = np.array(self.episode_memories['actions'])
             actions = torch.from_numpy(actions).type(torch.long).to(device)
+            game_overs = np.array(self.episode_memories['game_overs'])
+            game_overs = torch.from_numpy(game_overs).type(torch.float).to(device)
 
             # print(actions.size(0))
             actions = actions.reshape(1,actions.size(0))
@@ -130,7 +136,7 @@ class DQN_Agent():
             for i in range(10):
                 q_pred = self.model(current_states).gather(1, actions).reshape(-1,1)
                 # This is a (10, 1) vector
-                q_new = rewards + self.gamma * torch.max(self.target_model(new_states), dim=1, keepdim=True)[0]
+                q_new = rewards + self.gamma * torch.max(self.target_model(new_states), dim=1, keepdim=True)[0] * (1 - game_overs.reshape(-1,1))
                 # print(q_new)
                 self.optimizer.zero_grad()
                 loss = self.loss_func(q_pred, q_new)
@@ -139,13 +145,14 @@ class DQN_Agent():
                 self.optimizer.step()
 
 
-    def memorize(self, current_state, reward, action, new_state):
+    def memorize(self, current_state, reward, action, new_state, game_over):
         # Only memorize if there's space
         new_memory = {
             'states': [current_state],
             'rewards': [reward],
             'actions': [action],
-            'new_states': [new_state]
+            'new_states': [new_state],
+            'game_overs': [game_over]
         }
 
         # Check if memories full, if yes, than clear the earliest memories
@@ -165,7 +172,8 @@ class DQN_Agent():
             "states": [],
             "rewards": [],
             "actions": [],
-            "new_states": []
+            "new_states": [],
+            "game_overs": []
         }
         self.short_memories_size = 0
     def clear_episode_memories(self):
@@ -173,7 +181,8 @@ class DQN_Agent():
             "states": [],
             "rewards": [],
             "actions": [],
-            "new_states": []
+            "new_states": [],
+            "game_overs": []
         }
 
 
