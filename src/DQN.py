@@ -105,7 +105,6 @@ class DQN_Agent():
             actions = torch.unsqueeze(actions, 0)
             game_overs = (game_overs, )
 
-
             # print(actions.size(0))
         q_pred = self.model(states)
         q_expected = q_pred.clone()
@@ -126,28 +125,6 @@ class DQN_Agent():
     def memorize(self, current_state, action, reward, new_state, game_over):
         self.short_memories.append((current_state, reward, action, new_state, game_over))
         self.episode_memories.append((current_state, reward, action, new_state, game_over))
-
-
-        # Only memorize if there's space
-        # new_memory = {
-        #     'states': [current_state],
-        #     'rewards': [reward],
-        #     'actions': [action],
-        #     'new_states': [new_state],
-        #     'game_overs': [game_over]
-        # }
-        #
-        # # Check if memories full, if yes, than clear the earliest memories
-        # if self.short_memories_size == 10:
-        #     for key in self.short_memories:
-        #         self.short_memories[key].pop(0)
-        #     self.short_memories_size -= 1
-        # # Add new memories to the end of the list
-        # for key in new_memory:
-        #     if key in self.short_memories:
-        #         self.short_memories[key].extend(new_memory[key])
-        #         self.episode_memories[key].extend(new_memory[key])
-        # self.short_memories_size += 1
 
     def clear_memory(self):
         self.short_memories = deque(maxlen=10)

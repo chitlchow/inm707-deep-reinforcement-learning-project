@@ -136,6 +136,7 @@ alpha = 0.001
 gamma = 0.9
 epsilon_discount = 0.9992
 
+# Show graphics if set to True
 graphics = False
 
 # Main program for the game
