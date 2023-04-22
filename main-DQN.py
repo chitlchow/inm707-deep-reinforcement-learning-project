@@ -206,7 +206,7 @@ def game_loop(alpha, gamma, epsilon_discount):
                              new_state=new_state,
                              game_over=int(game_over))
             # learner.train_step(current_state, action, reward, new_state)
-            learner.train_short_memories()
+            learner.train_short_memories(current_state, action, reward, new_state, int(game_over))
             if graphics:
                 clock.tick(game_speed)
                 drawGrid(surface)
@@ -215,7 +215,7 @@ def game_loop(alpha, gamma, epsilon_discount):
                 screen.blit(surface, (0,0))
                 pygame.display.update()
 
-        learner.train_long_memories()
+        # learner.train_long_memories()
         learner.clear_episode_memories()
         end = time.time()
         ep_time = end - start

@@ -12,8 +12,8 @@ device = torch.device('cpu')
 class DQN_Agent():
     def __init__(self, learning_rate, gamma, epsilon_decay):
         # ANN model and parameters for training
-        self.model = DQ_Network(11, 64, 3)
-        self.target_model = DQ_Network(11, 64, 3)
+        self.model = DQ_Network(11, 256, 3)
+        self.target_model = DQ_Network(11, 256, 3)
         self.target_model.load_state_dict(self.model.state_dict())
         self.learning_rate = learning_rate
         self.gamma = gamma
@@ -25,22 +25,16 @@ class DQN_Agent():
 
         # Short memories
         self.short_memories_size = 0
-        self.short_memories = {
-            "states": [],
-            "rewards": [],
-            "actions": [],
-            "new_states": [],
-            "game_overs": []
-        }
+        self.short_memories = deque(maxlen=10)
+        #     {
+        #     "states": [],
+        #     "rewards": [],
+        #     "actions": [],
+        #     "new_states": [],
+        #     "game_overs": []
+        # }
 
-        self.episode_memories = {
-            "states": [],
-            "rewards": [],
-            "actions": [],
-            "new_states": [],
-            "game_overs": []
-
-        }
+        self.episode_memories = deque()
         self.score_history = []
         self.reward_history = []
         self.actions = {
@@ -49,27 +43,27 @@ class DQN_Agent():
             2: 'turn_left'
         }
 
-    def train_step(self, current_state, action, reward, new_state):
-        current_state = np.array(current_state)
-        current_state = torch.from_numpy(current_state).type(torch.Tensor).to(device)
-        new_state = np.array(new_state)
-        new_state = torch.from_numpy(new_state).type(torch.Tensor).to(device)
-
-        reward = torch.tensor(reward, dtype=torch.float).to(device)
-        action = torch.tensor(action, dtype=torch.long).to(device)
-        q_current = self.model(current_state)[action]
-        q_next = torch.max(self.target_model(new_state))
-
-        q_expected = reward
-        if reward != -10:
-            q_expected = reward + self.gamma * q_next
-        # print(target[action])
-        q_next = q_expected
-
-        self.optimizer.zero_grad()
-        loss = self.loss_func(q_next, q_current)
-        loss.backward()
-        self.optimizer.step()
+    # def train_step(self, current_state, action, reward, new_state):
+    #     current_state = np.array(current_state)
+    #     current_state = torch.from_numpy(current_state).type(torch.Tensor).to(device)
+    #     new_state = np.array(new_state)
+    #     new_state = torch.from_numpy(new_state).type(torch.Tensor).to(device)
+    #
+    #     reward = torch.tensor(reward, dtype=torch.float).to(device)
+    #     action = torch.tensor(action, dtype=torch.long).to(device)
+    #     q_current = self.model(current_state)[action]
+    #     q_next = torch.max(self.target_model(new_state))
+    #
+    #     q_expected = reward
+    #     if reward != -10:
+    #         q_expected = reward + self.gamma * q_next
+    #     # print(target[action])
+    #     q_next = q_expected
+    #
+    #     self.optimizer.zero_grad()
+    #     loss = self.loss_func(q_next, q_current)
+    #     loss.backward()
+    #     self.optimizer.step()
 
 
     def get_action(self, state):
@@ -87,104 +81,79 @@ class DQN_Agent():
         self.epsilon = max(self.epsilon* self.epsilon_decay, self.min_epsilon)
 
 
-    def train_short_memories(self):
-        if self.short_memories_size > 1:
-            current_states = np.array(self.short_memories['states'])
-            current_states = torch.from_numpy(current_states).type(torch.Tensor).to(device)
-            new_states = np.array(self.short_memories['new_states'])
-            new_states = torch.from_numpy(new_states).type(torch.Tensor).to(device)
-            rewards = np.array(self.short_memories['rewards'])
-            rewards = torch.from_numpy(rewards).type(torch.Tensor).to(device)
-
-            actions = np.array(self.short_memories['actions'])
-            actions = torch.from_numpy(actions).type(torch.long).to(device)
-
-            game_overs = np.array(self.short_memories['game_overs'])
-            game_overs = torch.from_numpy(game_overs).type(torch.float).to(device)
-
-            # print(actions.size(0))
-            actions = actions.reshape(1,actions.size(0))
-            rewards = rewards.reshape(-1, 1)
-            q_pred = self.model(current_states).gather(1, actions).reshape(-1,1)
-            # This is a (10, 1) vector
-            # print(game_overs.reshape(-1, 1))
-            q_new = rewards + self.gamma * torch.max(self.target_model(new_states), dim=1, keepdim=True)[0] *(1- game_overs.reshape(-1, 1))
-            # print(q_new)
-            self.optimizer.zero_grad()
-            loss = self.loss_func(q_pred, q_new)
-            # print(loss)
-            loss.backward()
-            self.optimizer.step()
+    def train_short_memories(self, states, actions, rewards, next_states, game_overs):
+        self.train(states, actions, rewards, next_states, game_overs)
 
     def train_long_memories(self):
-        if len(self.episode_memories['states']) > 1:
-            current_states = np.array(self.episode_memories['states'])
-            current_states = torch.from_numpy(current_states).type(torch.Tensor).to(device)
-            new_states = np.array(self.episode_memories['new_states'])
-            new_states = torch.from_numpy(new_states).type(torch.Tensor).to(device)
-            rewards = np.array(self.episode_memories['rewards'])
-            rewards = torch.from_numpy(rewards).type(torch.Tensor).to(device)
+        if len(self.episode_memories) > 1000:
+            sample = random.sample(self.episode_memories, 1000)
+        else:
+            sample = self.episode_memories
+        states, actions, rewards, next_states, game_overs = zip(*sample)
+        self.train(states, actions, rewards, next_states, game_overs)
 
-            actions = np.array(self.episode_memories['actions'])
-            actions = torch.from_numpy(actions).type(torch.long).to(device)
-            game_overs = np.array(self.episode_memories['game_overs'])
-            game_overs = torch.from_numpy(game_overs).type(torch.float).to(device)
+    def train(self, states, actions, rewards, next_states, game_overs):
+        states = torch.tensor(states, dtype=torch.float).to(device)
+        next_states = torch.tensor(next_states, dtype=torch.float).to(device)
+        rewards = torch.tensor(rewards, dtype=torch.float).to(device)
+        actions = torch.tensor(actions, dtype=torch.long).to(device)
+
+        if len(states.shape) == 1:
+            states = torch.unsqueeze(states, 0)
+            next_states = torch.unsqueeze(next_states, 0)
+            rewards = torch.unsqueeze(rewards, 0)
+            actions = torch.unsqueeze(actions, 0)
+            game_overs = (game_overs, )
+
 
             # print(actions.size(0))
-            actions = actions.reshape(1,actions.size(0))
-            rewards = rewards.reshape(-1, 1)
-            for i in range(10):
-                q_pred = self.model(current_states).gather(1, actions).reshape(-1,1)
+        q_pred = self.model(states)
+        q_expected = q_pred.clone()
+        # print(actions)
+        for i in range(len(game_overs)):
                 # This is a (10, 1) vector
-                q_new = rewards + self.gamma * torch.max(self.target_model(new_states), dim=1, keepdim=True)[0] * (1 - game_overs.reshape(-1,1))
-                # print(q_new)
-                self.optimizer.zero_grad()
-                loss = self.loss_func(q_pred, q_new)
-                # print(loss)
-                loss.backward()
-                self.optimizer.step()
+            if game_overs != 1:
+                q_new = rewards[i] + self.gamma * torch.max(self.model(next_states[i]))* (1 - game_overs[i])
+            q_expected[i][actions[i]] = q_new
+            # print(q_new)
+        self.optimizer.zero_grad()
+        loss = self.loss_func(q_pred, q_expected)
+        # print(loss)
+        loss.backward()
+        self.optimizer.step()
 
 
-    def memorize(self, current_state, reward, action, new_state, game_over):
+    def memorize(self, current_state, action, reward, new_state, game_over):
+        self.short_memories.append((current_state, reward, action, new_state, game_over))
+        self.episode_memories.append((current_state, reward, action, new_state, game_over))
+
+
         # Only memorize if there's space
-        new_memory = {
-            'states': [current_state],
-            'rewards': [reward],
-            'actions': [action],
-            'new_states': [new_state],
-            'game_overs': [game_over]
-        }
-
-        # Check if memories full, if yes, than clear the earliest memories
-        if self.short_memories_size == 10:
-            for key in self.short_memories:
-                self.short_memories[key].pop(0)
-            self.short_memories_size -= 1
-        # Add new memories to the end of the list
-        for key in new_memory:
-            if key in self.short_memories:
-                self.short_memories[key].extend(new_memory[key])
-                self.episode_memories[key].extend(new_memory[key])
-        self.short_memories_size += 1
+        # new_memory = {
+        #     'states': [current_state],
+        #     'rewards': [reward],
+        #     'actions': [action],
+        #     'new_states': [new_state],
+        #     'game_overs': [game_over]
+        # }
+        #
+        # # Check if memories full, if yes, than clear the earliest memories
+        # if self.short_memories_size == 10:
+        #     for key in self.short_memories:
+        #         self.short_memories[key].pop(0)
+        #     self.short_memories_size -= 1
+        # # Add new memories to the end of the list
+        # for key in new_memory:
+        #     if key in self.short_memories:
+        #         self.short_memories[key].extend(new_memory[key])
+        #         self.episode_memories[key].extend(new_memory[key])
+        # self.short_memories_size += 1
 
     def clear_memory(self):
-        self.short_memories = {
-            "states": [],
-            "rewards": [],
-            "actions": [],
-            "new_states": [],
-            "game_overs": []
-        }
+        self.short_memories = deque(maxlen=10)
         self.short_memories_size = 0
     def clear_episode_memories(self):
-        self.episode_memories = {
-            "states": [],
-            "rewards": [],
-            "actions": [],
-            "new_states": [],
-            "game_overs": []
-        }
-
+        self.episode_memories = deque()
 
 class DQ_Network(nn.Module):
     # The network is to predict the Q-value - not the actions
