@@ -128,7 +128,6 @@ down = (0,1)
 left = (-1,0)
 right = (1,0)
 
-score = 0
 num_episodes = 30000
 game_speed = 1000
 
@@ -143,7 +142,6 @@ graphics = False
 
 def game_loop(alpha, gamma, epsilon_discount):
     learner = DQN_Agent(learning_rate=alpha, gamma=gamma, epsilon_decay=epsilon_discount)
-
     snake = Snake(screen_width, screen_height)
     food = Food(screen_width, screen_height)
     if graphics:
@@ -183,7 +181,6 @@ def game_loop(alpha, gamma, epsilon_discount):
                 reward = 10
                 # Reset the counter
                 steps_without_food = 0
-
                 # new_state = get_state(snake, food)
                 food.randomize_position()
             else:
@@ -228,11 +225,12 @@ def game_loop(alpha, gamma, epsilon_discount):
         reset_game(snake, food)
         # print("EP: {}, Score: {}".format(episode, score))
         if episode % 25 == 0:
-            print("EP: {}, Mean Score: {:.2f}, epsilon: {:.4f}, episode time: {:.6f}"\
-                  .format(episode,np.mean(np.array(learner.score_history)),learner.epsilon, ep_time))
-        # with open("training_history/episode-{}.pickle".format(episode), 'wb') as file:
-                # pickle.dump(learner.Q_tables, file)
-                # pass
+            print("EP: {}, Mean Score: {:.2f}, epsilon: {:.4f}, episode time: {:.6f}, Highest: {}"\
+                  .format(episode,np.mean(np.array(learner.score_history)),
+                          learner.epsilon,
+                          ep_time,
+                          np.max(learner.score_history)))
+            learner.model.save_model(f_name='snapshot-ep-{}.pth'.format(episode))
             # Clear the history of last 25 episodes
             learner.score_history = []
 
