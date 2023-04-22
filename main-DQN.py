@@ -26,6 +26,7 @@ def get_state(snake, food):
     for action in actions:
         states.append(int(snake.direction == action))
 
+
     # 2: Check food position relative to the snake
     food_direction_states = snake_food_direction(snake, food)
 
@@ -40,25 +41,46 @@ def get_state(snake, food):
     return tuple(states)
 
 def check_dangers(snake):
+    # head position
     x, y = snake.positions[0]
-    danger_up = False
-    danger_down = False
+    danger_ahead = False
     danger_right = False
     danger_left = False
 
-    # Check right-hand side
-    if x + gridsize >= screen_width or (x + gridsize, y) in snake.positions:
+    actions = [up, right, down, left]
+    # Check danger ahead
+    front_pos = (x + snake.direction[0], y + snake.direction[1])
+    # If it crash it selfs
+    if  front_pos in snake.positions \
+        or front_pos[0] >= screen_width \
+        or front_pos[1] >= screen_height \
+        or front_pos[0] < 0 \
+        or front_pos[1] < 0:
+        danger_ahead = True
+
+    #  Check right
+    current_dir_index  = actions.index(snake.direction)
+    right_step = actions[(current_dir_index + 1) % 4]
+    right_pos = (x + right_step[0], y + right_step[1])
+    if right_pos in snake.positions \
+        or right_pos[0] >= screen_width \
+        or right_pos[1] >= screen_height \
+        or right_pos[0] < 0 \
+        or right_pos[1] < 0:
         danger_right = True
+
     # Check left
-    if x - gridsize < 0 or (x - gridsize, y) in snake.positions:
+    left_step = actions[(current_dir_index - 1) % 4]
+    left_pos = (x + left_step[0], y + left_step[1])
+
+    if left_pos in snake.positions \
+        or left_pos[0] >= screen_width \
+        or left_pos[1] >= screen_height \
+        or left_pos[0] < 0 \
+        or left_pos[1] < 0:
         danger_left = True
-    # Check down
-    if y + gridsize >= screen_height or (x, y + gridsize) in snake.positions:
-        danger_down = True
-    # Check up
-    if y - gridsize < 0 or (x, y - gridsize) in snake.positions:
-        danger_up = True
-    dangers = [danger_up, danger_down, danger_right, danger_left]
+
+    dangers = [danger_ahead, danger_right, danger_left]
     return dangers
 
 def snake_food_direction(snake, food):
@@ -109,11 +131,13 @@ right = (1,0)
 
 score = 0
 num_episodes = 30000
-game_speed = 100000
+game_speed = 1000
 
-alpha = 0.001
+alpha = 0.01
 gamma = 0.95
 epsilon_discount = 0.9992
+
+graphics = False
 
 # Main program for the game
 
@@ -122,10 +146,16 @@ def game_loop(alpha, gamma, epsilon_discount):
     clock = pygame.time.Clock()
     snake = Snake(screen_width, screen_height)
     food = Food(screen_width, screen_height)
+    if graphics:
+        screen = pygame.display.set_mode((screen_width, screen_height))
+        surface = pygame.Surface(screen.get_size())
+        surface.convert()
+        drawGrid(surface)
 
     training_histories = []
     start = time.time()
     for episode in range(1, num_episodes + 1):
+
         crash = False
         score = 0
         steps_without_food = 0
@@ -138,6 +168,9 @@ def game_loop(alpha, gamma, epsilon_discount):
 
         while not crash or steps_without_food == 1000:
             reward = 0
+            clock.tick(game_speed)
+
+
 
             # Agent making moves
             current_state = get_state(snake, food)
@@ -172,6 +205,12 @@ def game_loop(alpha, gamma, epsilon_discount):
             learner.memorize(current_state, reward=reward, action=action, new_state=new_state)
             # learner.train_step(current_state, action, reward, new_state)
             learner.train_short_memories()
+            if graphics:
+                drawGrid(surface)
+                snake.draw(surface)
+                food.draw(surface)
+                screen.blit(surface, (0,0))
+                pygame.display.update()
 
         learner.train_long_memories()
         learner.clear_episode_memories()

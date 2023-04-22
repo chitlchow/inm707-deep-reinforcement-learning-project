@@ -12,8 +12,8 @@ device = torch.device('cpu')
 class DQN_Agent():
     def __init__(self, learning_rate, gamma, epsilon_decay):
         # ANN model and parameters for training
-        self.model = DQ_Network(12, 512, 3)
-        self.target_model = DQ_Network(12, 512, 3)
+        self.model = DQ_Network(11, 512, 3)
+        self.target_model = DQ_Network(11, 512, 3)
         self.target_model.load_state_dict(self.model.state_dict())
         self.learning_rate = learning_rate
         self.gamma = gamma
@@ -41,10 +41,6 @@ class DQN_Agent():
         self.score_history = []
         self.reward_history = []
         self.actions = {
-            # 0: up,
-            # 1: down,
-            # 2: right,
-            # 3: left
             0: 'straight',
             1: 'turn_right',
             2: 'turn_left'
