@@ -30,13 +30,12 @@ class QLearner:
         # food_down: 0, 1
         # food_right: 0, 1
         # food_left: 0, 1
-        # danger_up: 0, 1
-        # danger_down: 0, 1
+        # danger_ahead
         # danger_right: 0, 1
         # danger_left: 0, 1
         # actions: up, down, left, right
 
-        self.Q_tables = np.zeros((2,2,2,2,2,2,2,2,2,2,2,2,3))   # Depends on the State and Actions
+        self.Q_tables = np.zeros((2,2,2,2,2,2,2,2,2,2,2,3))   # Depends on the State and Actions
 
         # Q learning Parameters
         self.epsilon = 1.0

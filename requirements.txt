@@ -5,3 +5,5 @@ pandas
 gymnasium
 torch
 matplotlib
+jupyter
+"ray[rllib]"
